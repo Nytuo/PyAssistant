@@ -6,10 +6,9 @@ import wave
 import pygame
 import keyboard
 
-from STT.W_STT import W_STT
+from STT.ISTT import ISTT
 from TTS.BARK_TTS import BARK_TTS
 from TTS.OAI_TTS import OAI_TTS
-from STT.OAI_STT import OAI_STT
 from Thinkers.OllamaThinker import OllamaThinker
 from Thinkers.OAI_Thinker import OpenThinker
 
@@ -65,12 +64,10 @@ def play_audio(audio_file):
 
 def jarvis(online_stt=False, online_tts=False, online_thinker=False):
     audiopath = get_microphone_to_audiofile()
-
     if not online_stt:
-        transcript = W_STT(model=os.getenv("STT_OFF_MODEL"), audio_file_path=audiopath).get_speech_to_text()
+        transcript = ISTT(audio_file_path=audiopath).model(model=os.getenv("STT_OFF_MODEL")).get_speech_to_text()
     else:
-        transcript = OAI_STT(api_key=os.getenv("OPENAI_API_KEY"), model=os.getenv("STT_ON_MODEL"),
-                             audio_file_path=audiopath).get_speech_to_text()
+        transcript = ISTT(audio_file_path=audiopath).model(model=os.getenv("STT_OFF_MODEL")).using(api_key=os.getenv("OPENAI_API_KEY")).get_speech_to_text()
     print("TRANSCRIPT: " + transcript)
 
     if not online_thinker:
@@ -93,6 +90,8 @@ def jarvis(online_stt=False, online_tts=False, online_thinker=False):
 if __name__ == '__main__':
     print("JARVIS IS READY, PRESS CTRL+SHIFT+H TO ACTIVATE IT.")
     keyboard.add_hotkey(os.getenv("SHORTCUT_LISTEN"),
-                        lambda: jarvis(online_stt=False, online_tts=True, online_thinker=False))
+                        lambda: jarvis(online_stt=os.getenv("STT_ONLINE") == "1",
+                                       online_tts=os.getenv("TTS_ONLINE") == "1",
+                                       online_thinker=os.getenv("THINKER_ONLINE") == "1"))
     keyboard.add_hotkey(os.getenv("SHORTCUT_EXIT"), lambda: exit(0))
     keyboard.wait()
